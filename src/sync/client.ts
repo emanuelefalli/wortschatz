@@ -54,8 +54,23 @@ export function savePassphrase(passphrase: string, remember: boolean): void {
   }
 }
 
+/** Accept whatever the learner pastes (project URL, REST URL, dashboard URL) and reduce it to the project origin. */
+export function normalizeSupabaseUrl(raw: string): string {
+  const t = raw.trim();
+  if (!t) return "";
+  try {
+    const u = new URL(t.includes("://") ? t : `https://${t}`);
+    // Dashboard links look like https://supabase.com/dashboard/project/<ref>/…
+    const m = u.pathname.match(/\/project\/([a-z0-9]{15,})/);
+    if (u.hostname.endsWith("supabase.com") && m) return `https://${m[1]}.supabase.co`;
+    return u.origin;
+  } catch {
+    return t;
+  }
+}
+
 export function getProvider(cfg: SyncConfig): SupabaseProvider {
-  return new SupabaseProvider(getSupabaseClient({ url: cfg.url, anonKey: cfg.anonKey }));
+  return new SupabaseProvider(getSupabaseClient({ url: normalizeSupabaseUrl(cfg.url), anonKey: cfg.anonKey.trim() }));
 }
 
 let inFlight: Promise<SyncResult | null> | null = null;

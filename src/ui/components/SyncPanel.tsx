@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { getSyncStatus, syncNow } from "../../sync/engine";
-import { getProvider, loadPassphrase, loadSyncConfig, savePassphrase, saveSyncConfig, type SyncConfig } from "../../sync/client";
+import { getProvider, loadPassphrase, loadSyncConfig, normalizeSupabaseUrl, savePassphrase, saveSyncConfig, type SyncConfig } from "../../sync/client";
 import { SUPABASE_SETUP_SQL } from "../../sync/supabaseProvider";
 import { useAsync } from "../hooks";
 import { useStore } from "../store";
@@ -86,10 +86,11 @@ export function SyncPanel() {
       <div className="grid-2">
         <div className="field">
           <label htmlFor="sb-url">Project URL</label>
-          <input id="sb-url" type="text" placeholder="https://xxxx.supabase.co" value={cfg.url} onChange={(e) => persist({ ...cfg, url: e.target.value.trim() })} />
+          <input id="sb-url" type="text" placeholder="https://xxxx.supabase.co" value={cfg.url} onChange={(e) => persist({ ...cfg, url: e.target.value.trim() })} onBlur={(e) => persist({ ...cfg, url: normalizeSupabaseUrl(e.target.value) })} />
+          <span className="small muted">Project Settings → API → Project URL. A pasted REST or dashboard link is reduced to the project URL automatically.</span>
         </div>
         <div className="field">
-          <label htmlFor="sb-key">Anon (public) key</label>
+          <label htmlFor="sb-key">Publishable / anon key</label>
           <input id="sb-key" type="text" placeholder="eyJ…" value={cfg.anonKey} onChange={(e) => persist({ ...cfg, anonKey: e.target.value.trim() })} />
         </div>
       </div>

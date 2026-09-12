@@ -62,6 +62,16 @@ async function reviewOne(db: Awaited<ReturnType<typeof freshDb>>, sessionId: str
   return item.senseId;
 }
 
+describe("Supabase URL normalization", () => {
+  it("reduces REST, dashboard and bare-host inputs to the project origin", async () => {
+    const { normalizeSupabaseUrl } = await import("../src/sync/client");
+    expect(normalizeSupabaseUrl("https://abcdefghijklmnop.supabase.co/rest/v1/")).toBe("https://abcdefghijklmnop.supabase.co");
+    expect(normalizeSupabaseUrl("abcdefghijklmnop.supabase.co")).toBe("https://abcdefghijklmnop.supabase.co");
+    expect(normalizeSupabaseUrl("https://supabase.com/dashboard/project/abcdefghijklmnop/settings/api")).toBe("https://abcdefghijklmnop.supabase.co");
+    expect(normalizeSupabaseUrl("https://abcdefghijklmnop.supabase.co")).toBe("https://abcdefghijklmnop.supabase.co");
+  });
+});
+
 describe("encryption", () => {
   it("round-trips and rejects a wrong passphrase", async () => {
     const blob = await encryptText('{"a":1,"ü":"ß"}', "correct horse");
