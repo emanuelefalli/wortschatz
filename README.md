@@ -6,7 +6,7 @@ translation with FSRS spaced repetition, independent learning states per
 direction, contextual sentences, cloze reinforcement after errors, grade
 override with learner-accepted translations, weak-word sessions, detailed
 progress analysis, offline persistence in IndexedDB (versioned schema with
-migrations), JSON/CSV import and export, pronunciation practice, personal
+migrations), JSON/CSV import and export, audio for every word, personal
 lists, a placement flow, and end-to-end-encrypted cloud sync between devices.
 
 ## Run
@@ -58,7 +58,6 @@ Vocabulary content is separate from application logic. Replace or extend
 | Accepted translations | "Report → my translation should be accepted" stores the answer per card (schema v2 `customAnswers`); the grader treats it as correct from then on and the current grade flips to Correct. Manage them in the vocabulary browser. |
 | Weak-word sessions | Dashboard button. Cards with a lapse or a non-correct last result that are due now or within the hour; no new words. |
 | Statistics | Due forecast for 7 days, new/learning/mature per CEFR level, 30-day review and accuracy trend, error types and error rate per direction, leeches. |
-| Pronunciation | Session direction "Pronunciation": say the headword; browser speech recognition (where available) proposes a grade by matching any recognition alternative against the word, otherwise you self-assess. Always overridable. Separate FSRS state per word; does not count as a new word. Practises words already met in translation. |
 | Personal lists | Create lists from a word's detail view; restrict a session to one list in setup. Lists sync. |
 | Placement | Dashboard → Placement: tick the words you already know, per level, 24 at a time; they become mature reviews. |
 | Cloud sync | Settings → Cloud sync. Backups are AES-256-GCM encrypted on the device with a passphrase (PBKDF2, 310k iterations); the server stores only ciphertext. Merge is deterministic: review logs are unioned, learning states take the later review, settings and lists take the newer timestamp, daily stats are recomputed from the log, in-progress sessions never leave the device. Optimistic concurrency with retry. Auto-sync on app start and after each finished session. |
@@ -125,7 +124,9 @@ python3 scripts/build-dtz.py pending.json scripts/dtz-translations data/personal
 
 ## Not yet implemented
 
-Spelling as a separately scheduled skill, licensed audio files, social
-features, and the additional exercise modes from spec §8 (article selection,
+Pronunciation exercises with speech recognition (deliberately left out: the
+learner only wants audio playback, not a speaking test), spelling as a
+separately scheduled skill, licensed audio files, social features, and the
+additional exercise modes from spec §8 (article selection,
 plural/verb-form production, listen-and-type, sentence reconstruction,
 confusing-word comparisons).

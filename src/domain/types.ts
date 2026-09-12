@@ -168,7 +168,7 @@ export const DEFAULT_SETTINGS: Settings = {
   requestRetention: 0.9
 };
 
-export type DirectionChoice = "de_en" | "en_de" | "mixed" | "pronunciation";
+export type DirectionChoice = "de_en" | "en_de" | "mixed";
 
 export type SessionConfig = {
   direction: DirectionChoice;

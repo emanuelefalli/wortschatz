@@ -2,10 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { addCustomAnswer, addReport, getActiveSession, getAllStates, getCustomAnswers, getDailyStats, getState, recordReview, saveSession } from "../../db/repo";
 import { getLists } from "../../db/repo";
 import { autoSync } from "../../sync/client";
-import { canRecognize, recognizeOnce } from "../speech";
-import { speakGerman } from "../audio";
 import { buildCloze } from "../../domain/cloze";
-import { expectedAnswer, gradeAnswer, gradeCloze, gradePronunciation, promptText, type GradeResult } from "../../domain/grader";
+import { expectedAnswer, gradeAnswer, gradeCloze, promptText, type GradeResult } from "../../domain/grader";
 import { applyReview, makeScheduler, newLearningState } from "../../domain/scheduler";
 import { applyAnswer, buildSession, currentItem, isFirstIntroduction, sessionSummary } from "../../domain/session";
 import { formatInterval, formatRelativeDue, localDay } from "../../domain/time";
@@ -97,8 +95,6 @@ function ActiveSession({
   const [preview, setPreview] = useState<Record<Outcome, string> | null>(null);
   const [saving, setSaving] = useState(false);
   const [report, setReport] = useState(false);
-  const [listening, setListening] = useState(false);
-  const [heard, setHeard] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const continueRef = useRef<HTMLButtonElement>(null);
 
@@ -109,8 +105,6 @@ function ActiveSession({
     setClozeResult(null);
     setExampleIndex(0);
     setPreview(null);
-    setHeard(null);
-    setListening(false);
     setTimeout(() => inputRef.current?.focus(), 0);
   }, [item.uid]);
 
@@ -148,34 +142,6 @@ function ActiveSession({
     setPhase("feedback");
   };
 
-  /** Pronunciation: propose a grade from recognition (or let the learner self-assess). */
-  const finishPronunciation = async (proposed: Outcome, reasons: string[], transcript: string) => {
-    const now = new Date();
-    setGrade({ outcome: proposed, reasons, expected: promptText(word, sense, "de_en"), accepted: [] });
-    setChosen(proposed);
-    setAnswer(transcript);
-    const st = (await getState(db, sense.id, item.skill)) ?? newLearningState(word.id, sense.id, item.skill, now);
-    const p = {} as Record<Outcome, string>;
-    for (const o of ["correct", "almost", "wrong", "unknown"] as Outcome[]) p[o] = formatInterval(applyReview(scheduler, st, o, now).intervalMs);
-    setPreview(p);
-    setPhase("feedback");
-  };
-
-  const listenAndGrade = async () => {
-    setListening(true);
-    setHeard(null);
-    try {
-      const r = await recognizeOnce("de-DE");
-      setHeard(r.transcript);
-      const g = gradePronunciation(promptText(word, sense, "de_en"), r.alternatives.length ? r.alternatives : [r.transcript]);
-      await finishPronunciation(g.outcome, g.reasons, r.transcript);
-    } catch (e) {
-      setHeard(e instanceof Error ? e.message : String(e));
-    } finally {
-      setListening(false);
-    }
-  };
-
   const commitUnaided = async () => {
     if (!grade || saving) return;
     setSaving(true);
@@ -183,7 +149,7 @@ function ActiveSession({
       const now = new Date();
       const prev = (await getState(db, sense.id, item.skill)) ?? newLearningState(word.id, sense.id, item.skill, now);
       // A word sense counts as "new today" only on its very first unaided review in any direction.
-      const introducedNew = item.skill !== "pronunciation" && isFirstIntroduction(await Promise.all(PHASE1_SKILLS.map((sk) => getState(db, sense.id, sk))));
+      const introducedNew = isFirstIntroduction(await Promise.all(PHASE1_SKILLS.map((sk) => getState(db, sense.id, sk))));
       const { next } = applyReview(scheduler, prev, chosen, now);
       const after = applyAnswer(session, item, chosen, sentence?.id);
       const log: ReviewLogEntry = {
@@ -340,96 +306,6 @@ function ActiveSession({
               Continue
             </button>
           </div>
-        )}
-      </div>
-    );
-  }
-
-  if (item.skill === "pronunciation") {
-    const headword = promptText(word, sense, "de_en");
-    const example = sense.sentences[0];
-    return (
-      <div className="stack" onKeyDown={onKey}>
-        {header}
-        <div className="card prompt-card">
-          <div className="direction">Pronunciation</div>
-          <div className="prompt" lang="de">
-            {headword}
-          </div>
-          <div className="hint">{sense.englishAnswers[0]}</div>
-          {example && (
-            <div className="hint" lang="de" style={{ marginTop: 8 }}>
-              {example.germanText}
-            </div>
-          )}
-          <div className="row" style={{ justifyContent: "center", marginTop: 12 }}>
-            <button type="button" className="btn small" onClick={() => speakGerman(headword)}>
-              🔊 Listen
-            </button>
-            {example && (
-              <button type="button" className="btn small" onClick={() => speakGerman(example.germanText)}>
-                🔊 Sentence
-              </button>
-            )}
-          </div>
-        </div>
-        {phase === "prompt" ? (
-          <div className="stack">
-            {canRecognize() ? (
-              <button type="button" className="btn primary block" disabled={listening} onClick={listenAndGrade}>
-                {listening ? "Listening… say the word" : "🎤 Record and check"}
-              </button>
-            ) : (
-              <p className="small muted">Speech recognition is not available in this browser. Say the word aloud, then grade yourself.</p>
-            )}
-            {heard && <p className="small muted">{heard}</p>}
-            <div className="row">
-              <button type="button" className="btn" onClick={() => finishPronunciation("correct", [], "")}>
-                I said it well
-              </button>
-              <button type="button" className="btn" onClick={() => finishPronunciation("almost", ["Self-assessed: not quite right."], "")}>
-                Not quite
-              </button>
-              <button type="button" className="btn" onClick={() => finishPronunciation("wrong", ["Self-assessed: could not say it."], "")}>
-                Couldn't say it
-              </button>
-            </div>
-          </div>
-        ) : (
-          grade && (
-            <div className="stack">
-              <div className={`verdict ${grade.outcome}`}>
-                <strong>{OUTCOME_LABEL[grade.outcome]}</strong>
-                {answer && <div>Recognized: “{answer}”</div>}
-                {grade.reasons.length > 0 && (
-                  <ul>
-                    {grade.reasons.map((r) => (
-                      <li key={r}>{r}</li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-              <div className="card">
-                <div className="small muted" style={{ marginBottom: 6 }}>
-                  Grade (recognition is only an aid – override if it misheard you · keys <span className="kbd">1</span>–<span className="kbd">4</span>)
-                </div>
-                <div className="override" role="radiogroup" aria-label="Grade">
-                  {(["correct", "almost", "wrong", "unknown"] as Outcome[]).map((o) => (
-                    <button key={o} type="button" role="radio" aria-checked={chosen === o} className={`btn ${chosen === o ? "selected" : ""}`} onClick={() => setChosen(o)}>
-                      <span>
-                        {OUTCOME_LABEL[o]}
-                        <br />
-                        <span className="k">{preview?.[o]}</span>
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <button ref={continueRef} type="button" className="btn primary block" onClick={commitUnaided} disabled={saving}>
-                Continue
-              </button>
-            </div>
-          )
         )}
       </div>
     );

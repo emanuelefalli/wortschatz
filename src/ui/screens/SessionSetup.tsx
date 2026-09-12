@@ -12,7 +12,11 @@ export const SETUP_KEY = "wortschatz.sessionConfig";
 export function loadSetup(defaultNewLimit: number): SessionConfig {
   try {
     const raw = localStorage.getItem(SETUP_KEY);
-    if (raw) return JSON.parse(raw) as SessionConfig;
+    if (raw) {
+      const cfg = JSON.parse(raw) as SessionConfig;
+      if (!["de_en", "en_de", "mixed"].includes(cfg.direction)) cfg.direction = "mixed";
+      return cfg;
+    }
   } catch {
     /* ignore */
   }
@@ -24,7 +28,6 @@ export function SessionSetup() {
   const [cfg, setCfg] = useState<SessionConfig>(() => loadSetup(settings.dailyNewWordLimit));
   const { data: today } = useAsync(() => getDailyStats(db, localDay()), [db]);
   const { data: lists } = useAsync(() => getLists(db), [db]);
-  const pronunciation = cfg.direction === "pronunciation";
   const remaining = Math.max(0, settings.dailyNewWordLimit - (today?.newWords ?? 0));
   const overLimit = cfg.newWordLimit > remaining;
   const available = new Set(words.map((w) => w.cefrLevel));
@@ -52,8 +55,7 @@ export function SessionSetup() {
               [
                 ["de_en", "German → English"],
                 ["en_de", "English → German"],
-                ["mixed", "Mixed"],
-                ["pronunciation", "Pronunciation"]
+                ["mixed", "Mixed"]
               ] as const
             ).map(([v, label]) => (
               <button
@@ -68,11 +70,7 @@ export function SessionSetup() {
               </button>
             ))}
           </div>
-          <p className="small muted">
-            {pronunciation
-              ? "Say each word aloud. Speech recognition (where the browser supports it) proposes a grade; you always have the final say."
-              : "Typed translation with contextual feedback."}
-          </p>
+          <p className="small muted">Typed translation with contextual feedback and audio for every word.</p>
         </div>
 
         <div className="field">
@@ -120,7 +118,7 @@ export function SessionSetup() {
         )}
 
         <div className="field">
-          <label htmlFor="new-limit">{pronunciation ? "Words to practise this session" : "New words this session"}</label>
+          <label htmlFor="new-limit">New words this session</label>
           <input
             id="new-limit"
             type="number"
@@ -129,12 +127,10 @@ export function SessionSetup() {
             value={cfg.newWordLimit}
             onChange={(e) => set({ newWordLimit: Math.max(0, Number(e.target.value) || 0) })}
           />
-          {!pronunciation && (
-            <span className="small muted">
-              {today ? `${remaining} of ${settings.dailyNewWordLimit} new words left today` : `Daily limit ${settings.dailyNewWordLimit}`} · change the limit in Settings
-            </span>
-          )}
-          {overLimit && !pronunciation && (
+          <span className="small muted">
+            {today ? `${remaining} of ${settings.dailyNewWordLimit} new words left today` : `Daily limit ${settings.dailyNewWordLimit}`} · change the limit in Settings
+          </span>
+          {overLimit && (
             <label className="row small">
               <input type="checkbox" checked={!!cfg.ignoreDailyLimit} onChange={(e) => set({ ignoreDailyLimit: e.target.checked })} />
               Go beyond today's limit for this session ({cfg.newWordLimit} new words)

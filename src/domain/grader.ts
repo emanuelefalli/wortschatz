@@ -244,24 +244,3 @@ export function gradeCloze(targetText: string, rawAnswer: string): { correct: bo
   }
   return { correct: false, reason: `Expected "${targetText}".` };
 }
-
-/**
- * Compare a speech-recognition transcript with the target word. Recognition
- * is fuzzy by nature, so any alternative that contains the word (umlaut- and
- * case-insensitively, small typos allowed) counts as correct; a near miss is
- * "almost"; the learner can always override.
- */
-export function gradePronunciation(targetWord: string, transcripts: string[]): { outcome: Outcome; reasons: string[] } {
-  const target = foldUmlauts(lower(stripPunctuation(targetWord.replace(/^(der|die|das|sich)\s+/, ""))));
-  const budget = typoBudget(target.length);
-  let best = Infinity;
-  for (const t of transcripts) {
-    const words = foldUmlauts(lower(stripPunctuation(normalizeBasic(t)))).split(" ").filter(Boolean);
-    if (words.join(" ").includes(target)) return { outcome: "correct", reasons: [] };
-    for (const w of words) best = Math.min(best, editDistance(w, target));
-    // multi-word targets (separable verbs, phrases): compare the joined string too
-    best = Math.min(best, editDistance(words.join(" "), target));
-  }
-  if (best <= budget) return { outcome: "almost", reasons: [`Recognized something close: ${transcripts[0] ?? ""}.`] };
-  return { outcome: "wrong", reasons: [`Recognized “${transcripts[0] ?? "nothing"}”, expected “${targetWord}”.`] };
-}

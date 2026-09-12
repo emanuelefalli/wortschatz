@@ -47,9 +47,7 @@ export function isSenseStable(state: LearningState | undefined): boolean {
 }
 
 export function skillsFor(direction: SessionConfig["direction"]): Skill[] {
-  if (direction === "mixed") return ["de_en", "en_de"];
-  if (direction === "pronunciation") return ["pronunciation"];
-  return [direction];
+  return direction === "mixed" ? ["de_en", "en_de"] : [direction];
 }
 
 type Candidate = { word: Word; sense: WordSense; skill: Skill; state?: LearningState };
@@ -115,18 +113,10 @@ export function buildSession(input: BuildInput): SessionRecord {
   const skills = skillsFor(config.direction);
   const levelSet = new Set(config.levels);
 
-  const pronunciation = config.direction === "pronunciation";
-  // Pronunciation practises words the learner has already met in translation (unless nothing has been met yet).
-  const introduced = new Set<string>();
-  if (pronunciation) {
-    for (const st of states.values()) if ((st.skill === "de_en" || st.skill === "en_de") && st.repetitions > 0) introduced.add(st.senseId);
-  }
-
   const candidates: Candidate[] = [];
   for (const word of words.filter((w) => levelSet.has(w.cefrLevel))) {
     for (const sense of word.senses) {
       if (input.listSenseIds && !input.listSenseIds.has(sense.id)) continue;
-      if (pronunciation && introduced.size > 0 && !introduced.has(sense.id)) continue;
       if (sense.order > 1) {
         // Unlock secondary meanings only after the first meaning is stable in this skill.
         const prev = word.senses.find((s) => s.order === sense.order - 1);
@@ -177,18 +167,14 @@ export function buildSession(input: BuildInput): SessionRecord {
   const freshSenses = [...freshBySense.values()].sort((a, b) => a[0].word.frequencyRank - b[0].word.frequencyRank);
 
   const remainingToday = Math.max(0, input.settings.dailyNewWordLimit - input.newWordsToday);
-  // Pronunciation cards are not new vocabulary, so the daily new-word limit does not apply.
-  const allowance = Math.max(0, config.ignoreDailyLimit || pronunciation ? config.newWordLimit : Math.min(config.newWordLimit, remainingToday));
+  const allowance = Math.max(0, config.ignoreDailyLimit ? config.newWordLimit : Math.min(config.newWordLimit, remainingToday));
   const newSenseIds: string[] = [];
   let alternate = 0;
-  let pronunciationCount = 0;
   for (const options of freshSenses) {
     if (queue.length >= config.cardCount) break;
-    const introducedBefore = pronunciation || options.some((c) => !!c.state && c.state.repetitions > 0) || senseReviewedElsewhere(states, options[0].sense.id);
+    const introducedBefore = options.some((c) => !!c.state && c.state.repetitions > 0) || senseReviewedElsewhere(states, options[0].sense.id);
     if (!introducedBefore && newSenseIds.length >= allowance) continue;
-    if (pronunciation && pronunciationCount >= allowance) continue;
     const pick = chooseDirection(options, alternate++);
-    if (pronunciation) pronunciationCount++;
     if (!introducedBefore) newSenseIds.push(pick.sense.id);
     usedSenses.add(pick.sense.id);
     queue.push(makeItem(pick, index++, true));
