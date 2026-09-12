@@ -1,0 +1,11 @@
+node_modules/
+dist/
+dev-dist/
+.DS_Store
+*.log
+.claude/
+
+# Personal-use data extracted from the Goethe/telc DTZ word list – never publish
+data/personal/
+scripts/dtz-translations/
+*.pdf
