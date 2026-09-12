@@ -96,22 +96,19 @@ synthesis.
 
 `.github/workflows/deploy.yml` builds and tests on every push to `main` and
 publishes `dist/` to GitHub Pages under `/<repository name>/` (the workflow
-sets `BASE_PATH`). Enable Pages with source "GitHub Actions" once. Only the
-CC0 vocabulary is bundled; personal datasets are imported on each device via
-Settings → Import vocabulary and then travel through encrypted sync.
+sets `BASE_PATH`). Enable Pages with source "GitHub Actions" once.
 
 ## DTZ word list (personal use)
 
-`data/personal/dtz-a2b1.json` is generated from the learner's own copy of the
+`data/vocab/dtz-a2b1.json` is generated from the learner's own copy of the
 Goethe-Institut/telc *DTZ-Wortliste* PDF by `scripts/extract-dtz.py`
 (column- and font-aware extraction, plural/verb-form parsing, cleanup) and
 `scripts/build-dtz.py` (merges the extracted entries with English
 translations written for this project). The German headwords, grammar and
-example sentences are copyrighted by Goethe-Institut/telc: the file is for
-personal study only, is excluded from version control, and is not bundled into
-the build. Import it once via Settings → Import vocabulary; sync carries it to
-other devices. Every entry is tagged B1 because the list carries no per-word
-level, and entries get a stable shuffled rank so new words are not introduced
+example sentences are copyrighted by Goethe-Institut/telc; this is a personal,
+non-commercial study project and the data is bundled for the owner's own use
+only. Every entry is tagged B1 because the list carries no per-word level, and
+entries get a stable shuffled rank so new words are not introduced
 alphabetically.
 
 Regenerate:
@@ -119,7 +116,7 @@ Regenerate:
 ```bash
 PYTHONPATH=<dir with pdfplumber> python3 scripts/extract-dtz.py dtz_wortliste.pdf raw.json
 python3 scripts/dtz-pending.py raw.json pending.json            # entries not already in data/vocab
-python3 scripts/build-dtz.py pending.json scripts/dtz-translations data/personal/dtz-a2b1.json
+python3 scripts/build-dtz.py pending.json scripts/dtz-translations data/vocab/dtz-a2b1.json
 ```
 
 ## Not yet implemented

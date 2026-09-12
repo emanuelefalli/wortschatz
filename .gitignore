@@ -5,7 +5,6 @@ dev-dist/
 *.log
 .claude/
 
-# Personal-use data extracted from the Goethe/telc DTZ word list – never publish
+# Source PDF of the DTZ word list is not redistributed
 data/personal/
-scripts/dtz-translations/
 *.pdf
