@@ -119,6 +119,16 @@ python3 scripts/dtz-pending.py raw.json pending.json            # entries not al
 python3 scripts/build-dtz.py pending.json scripts/dtz-translations data/vocab/dtz-a2b1.json
 ```
 
+## OCR GCSE word list (personal use)
+
+`data/vocab/ocr-gcse-a2b1.json` (740 entries) comes from the OCR GCSE German
+Vocabulary List PDF: `scripts/extract-ocr.py` reads the German/English pairs,
+`scripts/ocr-pending.py` drops everything already in `data/vocab`, and the
+hand-written batches in `scripts/ocr-entries/` add articles, plurals, verb
+forms and original example sentences. Foundation-tier words are tagged A2,
+Higher-tier words B1. Regenerate with `python3 scripts/build-ocr.py
+data/vocab/ocr-gcse-a2b1.json`.
+
 ## Not yet implemented
 
 Pronunciation exercises with speech recognition (deliberately left out: the
