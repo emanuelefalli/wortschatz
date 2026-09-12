@@ -1,6 +1,6 @@
 import type { CompactDataset } from "./compactFormat";
 import { expandDataset } from "./compactFormat";
-import type { Word } from "../domain/types";
+import type { CefrLevel, Word } from "../domain/types";
 import { parseVocabularyCsv } from "./csv";
 
 // Every JSON file in data/vocab is bundled. Add a file there to extend the
@@ -24,11 +24,17 @@ export const BUNDLED_DATASETS: CompactDataset[] = Object.keys(files)
   .map((k) => files[k])
   .sort((a, b) => datasetLevel(a) - datasetLevel(b));
 
-export const BUNDLED_DATASET_TAG = BUNDLED_DATASETS.map((d) => `${d.meta.source}@${d.entries.length}`).join("+");
+/** Levels the learner asked to leave out of the app entirely (the words stay in the data files). */
+export const HIDDEN_LEVELS: ReadonlySet<CefrLevel> = new Set<CefrLevel>(["A1"]);
+
+export const BUNDLED_DATASET_TAG = BUNDLED_DATASETS.map((d) => `${d.meta.source}@${d.entries.length}`).join("+") + `|hidden=${[...HIDDEN_LEVELS].join(",")}`;
+
+/** Sources of bundled datasets, used to prune words that were removed from the bundle. */
+export const BUNDLED_SOURCES: ReadonlySet<string> = new Set(BUNDLED_DATASETS.map((d) => d.meta.source));
 
 export function loadBundledWords(): Word[] {
   // Within a file, honour explicit ranks (or file order); across files, easy datasets first.
-  const words = BUNDLED_DATASETS.flatMap((d) => expandDataset(d).sort((a, b) => a.frequencyRank - b.frequencyRank));
+  const words = BUNDLED_DATASETS.flatMap((d) => expandDataset(d).sort((a, b) => a.frequencyRank - b.frequencyRank)).filter((w) => !HIDDEN_LEVELS.has(w.cefrLevel));
   const seen = new Set<string>();
   for (const w of words) {
     if (seen.has(w.id)) throw new Error(`Bundled datasets overlap on ${w.id}`);

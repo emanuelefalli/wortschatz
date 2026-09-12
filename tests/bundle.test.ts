@@ -16,9 +16,10 @@ describe("bundled vocabulary", () => {
     expect(BUNDLED_DATASETS.length).toBeGreaterThanOrEqual(2);
   });
 
-  it("orders files from easy to hard and keeps per-file ranks", () => {
+  it("hides A1, orders files from easy to hard and keeps per-file ranks", () => {
     const words = loadBundledWords();
-    expect(words[0].cefrLevel).toBe("A1");
+    expect(words.some((w) => w.cefrLevel === "A1")).toBe(false);
+    expect(words[0].cefrLevel).toBe("A2");
     for (let i = 1; i < words.length; i++) expect(words[i].frequencyRank).toBeGreaterThan(words[i - 1].frequencyRank);
   });
 });

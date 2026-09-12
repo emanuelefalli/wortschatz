@@ -28,6 +28,16 @@ beforeEach(async () => {
 });
 
 describe("import", () => {
+  it("prunes bundled words that left the bundle but keeps other sources", async () => {
+    const { pruneBundledWords } = await import("../src/db/repo");
+    await db.words.put({ ...WORDS[0], id: "w:custom", source: "user:list.csv" });
+    const keep = new Set(WORDS.slice(1).map((w) => w.id));
+    const removed = await pruneBundledWords(db, keep, new Set([WORDS[0].source]));
+    expect(removed).toBe(1);
+    expect(await db.words.get(WORDS[0].id)).toBeUndefined();
+    expect(await db.words.get("w:custom")).toBeDefined();
+    expect(await db.words.count()).toBe(WORDS.length);
+  });
   it("is idempotent and skips duplicates within a batch", async () => {
     const again = await importWords(db, [...WORDS, WORDS[0]], "test");
     expect(again.inserted).toBe(0);

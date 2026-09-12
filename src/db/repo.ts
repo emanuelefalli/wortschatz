@@ -50,6 +50,13 @@ export async function importWords(db: FlashcardDB, words: Word[], datasetTag: st
   return summary;
 }
 
+/** Remove bundled words that are no longer part of the bundle (e.g. a hidden level). Progress rows are kept. */
+export async function pruneBundledWords(db: FlashcardDB, keepIds: Set<string>, bundledSources: ReadonlySet<string>): Promise<number> {
+  const stale = (await db.words.toArray()).filter((w) => bundledSources.has(w.source) && !keepIds.has(w.id)).map((w) => w.id);
+  if (stale.length) await db.words.bulkDelete(stale);
+  return stale.length;
+}
+
 export async function getDatasetTag(db: FlashcardDB): Promise<string | undefined> {
   return (await db.meta.get("dataset"))?.value;
 }

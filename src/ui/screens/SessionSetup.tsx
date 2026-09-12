@@ -9,28 +9,33 @@ import { useStore } from "../store";
 
 export const SETUP_KEY = "wortschatz.sessionConfig";
 
-export function loadSetup(defaultNewLimit: number): SessionConfig {
+export function loadSetup(defaultNewLimit: number, availableLevels?: CefrLevel[]): SessionConfig {
+  let cfg: SessionConfig = { direction: "mixed", levels: [], cardCount: 20, newWordLimit: defaultNewLimit, filter: "all" };
   try {
     const raw = localStorage.getItem(SETUP_KEY);
     if (raw) {
-      const cfg = JSON.parse(raw) as SessionConfig;
+      cfg = { ...cfg, ...(JSON.parse(raw) as SessionConfig) };
       if (!["de_en", "en_de", "mixed"].includes(cfg.direction)) cfg.direction = "mixed";
-      return cfg;
     }
   } catch {
     /* ignore */
   }
-  return { direction: "mixed", levels: ["A1"], cardCount: 20, newWordLimit: defaultNewLimit, filter: "all" };
+  if (availableLevels) {
+    // Drop levels that no longer exist; with nothing left, default to the lowest available level.
+    cfg.levels = cfg.levels.filter((l) => availableLevels.includes(l));
+    if (cfg.levels.length === 0 && availableLevels.length) cfg.levels = [availableLevels[0]];
+  }
+  return cfg;
 }
 
 export function SessionSetup() {
   const { db, settings, words } = useStore();
-  const [cfg, setCfg] = useState<SessionConfig>(() => loadSetup(settings.dailyNewWordLimit));
+  const available = new Set(words.map((w) => w.cefrLevel));
+  const [cfg, setCfg] = useState<SessionConfig>(() => loadSetup(settings.dailyNewWordLimit, CEFR_LEVELS.filter((l) => available.has(l))));
   const { data: today } = useAsync(() => getDailyStats(db, localDay()), [db]);
   const { data: lists } = useAsync(() => getLists(db), [db]);
   const remaining = Math.max(0, settings.dailyNewWordLimit - (today?.newWords ?? 0));
   const overLimit = cfg.newWordLimit > remaining;
-  const available = new Set(words.map((w) => w.cefrLevel));
   const set = (patch: Partial<SessionConfig>) => setCfg((c) => ({ ...c, ...patch }));
   const toggleLevel = (l: CefrLevel) =>
     set({ levels: cfg.levels.includes(l) ? cfg.levels.filter((x) => x !== l) : [...cfg.levels, l] });
@@ -74,15 +79,14 @@ export function SessionSetup() {
         </div>
 
         <div className="field">
-          <label>Levels</label>
+          <label>Levels (tick one or more)</label>
           <div className="segmented">
-            {CEFR_LEVELS.map((l) => (
+            {CEFR_LEVELS.filter((l) => available.has(l)).map((l) => (
               <button
                 key={l}
                 type="button"
                 role="checkbox"
                 aria-checked={cfg.levels.includes(l)}
-                disabled={!available.has(l)}
                 className={`btn ${cfg.levels.includes(l) ? "selected" : ""}`}
                 onClick={() => toggleLevel(l)}
               >

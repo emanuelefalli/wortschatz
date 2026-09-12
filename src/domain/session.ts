@@ -164,7 +164,9 @@ export function buildSession(input: BuildInput): SessionRecord {
     if (!freshBySense.has(c.sense.id)) freshBySense.set(c.sense.id, []);
     freshBySense.get(c.sense.id)!.push(c);
   }
-  const freshSenses = [...freshBySense.values()].sort((a, b) => a[0].word.frequencyRank - b[0].word.frequencyRank);
+  // New words are a random sample of the unstarted pool (seeded by the session id, so a
+  // resumed session is stable but every new session gets a different mix).
+  const freshSenses = shuffle([...freshBySense.values()], hashSeed(input.sessionId));
 
   const remainingToday = Math.max(0, input.settings.dailyNewWordLimit - input.newWordsToday);
   const allowance = Math.max(0, config.ignoreDailyLimit ? config.newWordLimit : Math.min(config.newWordLimit, remainingToday));
@@ -224,6 +226,29 @@ function chooseDirection(options: Candidate[], alternate: number): Candidate {
   const pool = untouched.length ? untouched : options;
   const ordered = [...pool].sort((a, b) => a.skill.localeCompare(b.skill)); // de_en before en_de
   return ordered[alternate % ordered.length];
+}
+
+function hashSeed(text: string): number {
+  let h = 2166136261;
+  for (let i = 0; i < text.length; i++) h = Math.imul(h ^ text.charCodeAt(i), 16777619);
+  return h >>> 0;
+}
+
+/** Deterministic Fisher–Yates shuffle (mulberry32). */
+function shuffle<T>(items: T[], seed: number): T[] {
+  let a = seed || 1;
+  const rnd = () => {
+    a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+  const out = [...items];
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = Math.floor(rnd() * (i + 1));
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  return out;
 }
 
 export const CLOZE_GAP = 3;

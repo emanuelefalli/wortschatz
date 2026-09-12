@@ -46,7 +46,8 @@ export function Session({ resume, preset }: { resume?: boolean; preset?: Session
         }
       }
       const now = new Date();
-      const config = presetConfig(preset, loadSetup(settings.dailyNewWordLimit));
+      const availableLevels = [...new Set(words.map((w) => w.cefrLevel))].sort();
+      const config = presetConfig(preset, loadSetup(settings.dailyNewWordLimit, availableLevels));
       const [states, today, lists] = await Promise.all([getAllStates(db), getDailyStats(db, localDay(now)), config.listId ? getLists(db) : Promise.resolve([])]);
       const list = config.listId ? lists.find((l) => l.id === config.listId) : undefined;
       const built = buildSession({

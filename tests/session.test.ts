@@ -36,12 +36,14 @@ function reviewedState(senseId: string, wordId: string, skill: "de_en" | "en_de"
 }
 
 describe("buildSession", () => {
-  it("introduces new words by frequency rank up to the daily limit", () => {
+  it("introduces a random sample of new words up to the daily limit, different per session", () => {
     const s = build();
     expect(s.queue.length).toBe(10);
     expect(s.queue.every((i) => i.isNew && i.skill === "de_en")).toBe(true);
     expect(s.newSenseIds.length).toBe(10);
-    expect(s.queue[0].wordId).toBe(WORDS[0].id);
+    const again = build({ sessionId: "s2" });
+    expect(again.queue.map((i) => i.senseId)).not.toEqual(s.queue.map((i) => i.senseId));
+    expect(build({ sessionId: "s1" }).queue.map((i) => i.senseId)).toEqual(s.queue.map((i) => i.senseId)); // stable for a resumed session
   });
 
   it("respects new words already introduced today, explains an empty session, and allows an explicit override", () => {
