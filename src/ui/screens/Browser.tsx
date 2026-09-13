@@ -1,10 +1,12 @@
 import { useMemo, useState } from "react";
-import { addReport, deleteCustomAnswer, getAllStates, getCustomAnswersForSense, getLists, getLogForSense, putState, saveList, toggleInList } from "../../db/repo";
+import { addReport, addUserWord, deleteCustomAnswer, deleteWord, getAllStates, getCustomAnswersForSense, getLists, getLogForSense, putState, saveList, toggleInList } from "../../db/repo";
+import { isUserWord } from "../../data/userWord";
 import { makeScheduler, markKnown, maturity, newLearningState } from "../../domain/scheduler";
 import { formatRelativeDue } from "../../domain/time";
 import type { LearningState, Skill, Word, WordSense } from "../../domain/types";
 import { PHASE1_SKILLS, stateKey } from "../../domain/types";
 import { ExampleSentence, GrammarForms, Headword, Notes, SpeakButton } from "../components/WordInfo";
+import { AddWordDialog } from "../components/AddWordDialog";
 import { ReportDialog } from "../components/ReportDialog";
 import { useAsync } from "../hooks";
 import { useStore } from "../store";
@@ -12,8 +14,9 @@ import { useStore } from "../store";
 const SKILL_LABEL: Record<Skill, string> = { de_en: "DE→EN", en_de: "EN→DE", spelling: "Spelling", pronunciation: "Pronunciation" };
 
 export function Browser({ initialWordId }: { initialWordId?: string }) {
-  const { db, words, settings, toast } = useStore();
+  const { db, words, settings, toast, reloadWords } = useStore();
   const [q, setQ] = useState("");
+  const [adding, setAdding] = useState(false);
   const [level, setLevel] = useState("all");
   const [pos, setPos] = useState("all");
   const [bucket, setBucket] = useState("all");
@@ -48,7 +51,12 @@ export function Browser({ initialWordId }: { initialWordId?: string }) {
 
   return (
     <div className="stack">
-      <h1>Vocabulary</h1>
+      <div className="row" style={{ justifyContent: "space-between" }}>
+        <h1 style={{ margin: 0 }}>Vocabulary</h1>
+        <button type="button" className="btn small" onClick={() => setAdding(true)}>
+          ＋ Add word
+        </button>
+      </div>
       <input type="search" placeholder="Search German or English" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search" />
       <div className="row">
         <select aria-label="Level" value={level} onChange={(e) => setLevel(e.target.value)}>
@@ -99,6 +107,23 @@ export function Browser({ initialWordId }: { initialWordId?: string }) {
           </button>
         ))}
       </div>
+      {adding && (
+        <AddWordDialog
+          words={words}
+          onClose={() => setAdding(false)}
+          onOpenExisting={(id) => {
+            setAdding(false);
+            setOpenId(id);
+          }}
+          onAdd={async (w) => {
+            await addUserWord(db, w);
+            await reloadWords();
+            toast(`Added “${w.lemma}”`);
+            setAdding(false);
+            setOpenId(w.id);
+          }}
+        />
+      )}
       {open && states && (
         <WordDetail
           word={open}
@@ -108,6 +133,18 @@ export function Browser({ initialWordId }: { initialWordId?: string }) {
           onChanged={() => {
             refresh();
           }}
+          onDelete={
+            isUserWord(open)
+              ? async () => {
+                  if (!window.confirm(`Delete “${open.lemma}” and its learning progress?`)) return;
+                  await deleteWord(db, open.id);
+                  await reloadWords();
+                  refresh();
+                  setOpenId(undefined);
+                  toast(`Deleted “${open.lemma}”`);
+                }
+              : undefined
+          }
           onReport={async (r) => {
             await addReport(db, r);
             toast("Report saved");
@@ -129,6 +166,7 @@ function WordDetail({
   audio,
   onClose,
   onChanged,
+  onDelete,
   onReport,
   db
 }: {
@@ -137,6 +175,8 @@ function WordDetail({
   audio: boolean;
   onClose: () => void;
   onChanged: () => void;
+  /** Present for words the learner added themselves. */
+  onDelete?: () => Promise<void>;
   onReport: (r: Parameters<typeof addReport>[1]) => Promise<void>;
   db: Parameters<typeof putState>[0];
 }) {
@@ -172,8 +212,7 @@ function WordDetail({
         <div className="row">
           <SpeakButton text={word.article ? `${word.article} ${word.lemma}` : word.lemma} enabled={audio} />
           <span className="small muted">
-            Source: {word.source}
-            {word.license ? ` · ${word.license}` : ""} · rank {word.frequencyRank}
+            {isUserWord(word) ? "Added by you" : `Source: ${word.source}${word.license ? ` · ${word.license}` : ""} · rank ${word.frequencyRank}`}
           </span>
         </div>
 
@@ -190,6 +229,11 @@ function WordDetail({
           <button type="button" className="btn small" onClick={() => setAll((st) => ({ ...st, suspended: !anySuspended }))}>
             {anySuspended ? "Unsuspend" : "Suspend"}
           </button>
+          {onDelete && (
+            <button type="button" className="btn small danger" onClick={() => void onDelete()}>
+              Delete word
+            </button>
+          )}
         </div>
 
         {history && history.length > 0 && (

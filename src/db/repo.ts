@@ -339,3 +339,32 @@ export function wordsToCsv(words: Word[]): string {
   }
   return rows.join("\n");
 }
+
+// ---------- Learner-added words ----------
+
+/** Add a word the learner typed in. Fails if the id (lemma + part of speech) already exists. */
+export async function addUserWord(db: FlashcardDB, word: Word): Promise<void> {
+  await db.transaction("rw", db.words, async () => {
+    if (await db.words.get(word.id)) throw new Error(`“${word.lemma}” (${word.partOfSpeech}) is already in your vocabulary.`);
+    await db.words.add(word);
+  });
+}
+
+/** Remove a word with its learning states, accepted answers and list memberships. The review log is kept as history. */
+export async function deleteWord(db: FlashcardDB, wordId: string): Promise<boolean> {
+  return db.transaction("rw", [db.words, db.learningStates, db.customAnswers, db.lists], async () => {
+    const word = await db.words.get(wordId);
+    if (!word) return false;
+    const senseIds = new Set(word.senses.map((s) => s.id));
+    await db.words.delete(wordId);
+    await db.learningStates.where("wordId").equals(wordId).delete();
+    await db.customAnswers.where("senseId").anyOf([...senseIds]).delete();
+    const now = new Date().toISOString();
+    for (const list of await db.lists.toArray()) {
+      if (list.senseIds.some((s) => senseIds.has(s))) {
+        await db.lists.put({ ...list, senseIds: list.senseIds.filter((s) => !senseIds.has(s)), updatedAt: now });
+      }
+    }
+    return true;
+  });
+}

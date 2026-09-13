@@ -139,11 +139,11 @@ nav.tabbar a .ico { font-size: 1.25rem; line-height: 1; }
 
 .field { display: flex; flex-direction: column; gap: 6px; }
 .field label { font-weight: 600; font-size: 0.9rem; }
-input[type="text"], input[type="search"], input[type="number"], select {
+input[type="text"], input[type="search"], input[type="number"], select, textarea {
   width: 100%; padding: 12px 14px; border: 1px solid var(--border); border-radius: 12px;
   background: var(--surface); min-height: 46px;
 }
-input:focus-visible, select:focus-visible { outline: 3px solid var(--accent); outline-offset: 1px; }
+input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 3px solid var(--accent); outline-offset: 1px; }
 .answer-input { font-size: 1.25rem; text-align: center; }
 
 .segmented { display: flex; gap: 6px; flex-wrap: wrap; }
@@ -212,3 +212,6 @@ table.simple th { color: var(--muted); font-weight: 600; font-size: 0.8rem; }
 .toast { position: fixed; bottom: calc(76px + env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%); background: var(--text); color: var(--bg); padding: 10px 16px; border-radius: 999px; font-size: 0.9rem; z-index: 30; box-shadow: var(--shadow); }
 .summary-list { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
 .kbd { font-family: ui-monospace, monospace; font-size: 0.75rem; border: 1px solid var(--border); border-radius: 4px; padding: 0 5px; color: var(--muted); }
+
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.form-error { color: var(--bad); font-size: 0.9rem; }

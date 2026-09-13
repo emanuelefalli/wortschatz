@@ -282,7 +282,8 @@ export function applyAnswer(
   if (item.mode === "unaided" && outcome !== "correct" && retriesSoFar(session, item) < MAX_RETRIES) {
     const base = { ...item, isNew: false };
     let pos = cursor + CLOZE_GAP;
-    if (outcome === "wrong" || outcome === "unknown") {
+    // Words without an example sentence (e.g. added by hand) skip the cloze step.
+    if ((outcome === "wrong" || outcome === "unknown") && sentenceId) {
       const cloze: QueueItem = { ...base, uid: `${item.uid}|cloze|${answered.length}`, mode: "cloze", retry: false, sentenceId };
       queue = insertAt(queue, cloze, pos);
       pos += RETRY_GAP;
