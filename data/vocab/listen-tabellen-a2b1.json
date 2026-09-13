@@ -1,0 +1,417 @@
+{
+"meta": {
+"name": "Deutsch – Aber Hallo! Listen & Tabellen A1–A2 (verbs)",
+"source": "Headwords, verb forms and government patterns from Hans Witzlinger, Deutsch – Aber Hallo! Listen & Tabellen für die Grundstufe A1–A2; English translations and example sentences written for this project",
+"license": "Personal, non-commercial study use of the verb list; original additions CC0-1.0",
+"notes": "Only the verbs missing from the other data/vocab files (the list overlaps almost entirely with the DTZ and OCR lists). Levels are our own approximation. Ranks are a stable shuffle.",
+"format": "compact-v1"
+},
+"entries": [
+{
+"l": "abraten",
+"p": "verb",
+"c": "B1",
+"v": {
+"p3": "rät ab",
+"pret": "riet ab",
+"pp": "abgeraten",
+"aux": "haben",
+"sep": true,
+"prep": "jemandem von etwas abraten (+ Dat.)"
+},
+"s": [
+{
+"en": [
+"to advise against"
+],
+"gn": "Separable, strong: rät ab – riet ab – hat abgeraten. The person takes the dative.",
+"x": [
+[
+"Ich würde dir von diesem Plan abraten.",
+"I would advise you against this plan.",
+"abraten"
+]
+]
+}
+],
+"rank": 5
+},
+{
+"l": "achten",
+"p": "verb",
+"c": "A2",
+"v": {
+"p3": "achtet",
+"pret": "achtete",
+"pp": "geachtet",
+"aux": "haben",
+"prep": "achten auf + Akk."
+},
+"s": [
+{
+"en": [
+"to pay attention",
+"to watch out"
+],
+"un": "achten auf + Akk. – pay attention to, look after",
+"x": [
+[
+"Achte auf den Verkehr, wenn du die Straße überquerst.",
+"Pay attention to the traffic when you cross the street.",
+"Achte"
+]
+]
+},
+{
+"en": [
+"to respect"
+],
+"x": [
+[
+"Ich achte seine Meinung, auch wenn ich sie nicht teile.",
+"I respect his opinion, even if I don't share it.",
+"achte"
+]
+]
+}
+],
+"rank": 13
+},
+{
+"l": "assistieren",
+"p": "verb",
+"c": "B1",
+"v": {
+"p3": "assistiert",
+"pret": "assistierte",
+"pp": "assistiert",
+"aux": "haben",
+"prep": "jemandem assistieren (+ Dat.)"
+},
+"s": [
+{
+"en": [
+"to assist"
+],
+"gn": "The person you assist takes the dative: Sie assistiert dem Arzt.",
+"x": [
+[
+"Die Krankenschwester assistiert dem Arzt bei der Operation.",
+"The nurse assists the doctor during the operation.",
+"assistiert"
+]
+]
+}
+],
+"rank": 6
+},
+{
+"l": "befehlen",
+"p": "verb",
+"c": "B1",
+"v": {
+"p3": "befiehlt",
+"pret": "befahl",
+"pp": "befohlen",
+"aux": "haben"
+},
+"s": [
+{
+"en": [
+"to order",
+"to command"
+],
+"gn": "Strong: befiehlt – befahl – hat befohlen. jemandem etwas befehlen (+ Dat. + Akk.).",
+"x": [
+[
+"Der Chef befahl uns, sofort mit der Arbeit anzufangen.",
+"The boss ordered us to start work immediately.",
+"befahl"
+]
+]
+}
+],
+"rank": 11
+},
+{
+"l": "beistehen",
+"p": "verb",
+"c": "B1",
+"v": {
+"p3": "steht bei",
+"pret": "stand bei",
+"pp": "beigestanden",
+"aux": "haben",
+"sep": true,
+"prep": "jemandem beistehen (+ Dat.)"
+},
+"s": [
+{
+"en": [
+"to stand by",
+"to support"
+],
+"gn": "Separable, strong: steht bei – stand bei – hat beigestanden. Takes the dative.",
+"x": [
+[
+"Meine Freunde haben mir in der schweren Zeit beigestanden.",
+"My friends stood by me during the hard time.",
+"beigestanden"
+]
+]
+}
+],
+"rank": 2
+},
+{
+"l": "bestehen",
+"p": "verb",
+"c": "A2",
+"v": {
+"p3": "besteht",
+"pret": "bestand",
+"pp": "bestanden",
+"aux": "haben",
+"prep": "bestehen aus + Dat. (consist of); bestehen auf + Dat. (insist on)"
+},
+"s": [
+{
+"en": [
+"to pass"
+],
+"un": "eine Prüfung bestehen – to pass an exam",
+"x": [
+[
+"Sie hat die Prüfung mit einer guten Note bestanden.",
+"She passed the exam with a good grade.",
+"bestanden"
+]
+]
+},
+{
+"en": [
+"to consist",
+"to consist of"
+],
+"un": "bestehen aus + Dat. – to consist of",
+"x": [
+[
+"Der Tisch besteht aus Holz und Metall.",
+"The table consists of wood and metal.",
+"besteht"
+]
+]
+}
+],
+"rank": 9
+},
+{
+"l": "biegen",
+"p": "verb",
+"c": "B1",
+"v": {
+"p3": "biegt",
+"pret": "bog",
+"pp": "gebogen",
+"aux": "haben"
+},
+"s": [
+{
+"en": [
+"to bend"
+],
+"gn": "Strong: biegt – bog – hat gebogen. With sein when turning: Er ist um die Ecke gebogen.",
+"x": [
+[
+"Er biegt den Draht mit einer Zange.",
+"He bends the wire with a pair of pliers.",
+"biegt"
+]
+]
+}
+],
+"rank": 8
+},
+{
+"l": "binden",
+"p": "verb",
+"c": "B1",
+"v": {
+"p3": "bindet",
+"pret": "band",
+"pp": "gebunden",
+"aux": "haben"
+},
+"s": [
+{
+"en": [
+"to tie",
+"to bind"
+],
+"gn": "Strong: bindet – band – hat gebunden.",
+"x": [
+[
+"Kannst du mir bitte die Schuhe binden?",
+"Can you tie my shoes for me, please?",
+"binden"
+]
+]
+}
+],
+"rank": 1
+},
+{
+"l": "fürchten",
+"p": "verb",
+"c": "A2",
+"v": {
+"p3": "fürchtet",
+"pret": "fürchtete",
+"pp": "gefürchtet",
+"aux": "haben",
+"prep": "sich fürchten vor + Dat."
+},
+"s": [
+{
+"en": [
+"to be afraid",
+"to be scared"
+],
+"un": "sich fürchten vor + Dat. – to be afraid of",
+"x": [
+[
+"Das Kind fürchtet sich vor dem großen Hund.",
+"The child is afraid of the big dog.",
+"fürchtet"
+]
+]
+},
+{
+"en": [
+"to fear"
+],
+"x": [
+[
+"Ich fürchte, wir kommen zu spät.",
+"I'm afraid we're going to be late.",
+"fürchte"
+]
+]
+}
+],
+"rank": 4
+},
+{
+"l": "gehorchen",
+"p": "verb",
+"c": "B1",
+"v": {
+"p3": "gehorcht",
+"pret": "gehorchte",
+"pp": "gehorcht",
+"aux": "haben",
+"prep": "jemandem gehorchen (+ Dat.)"
+},
+"s": [
+{
+"en": [
+"to obey"
+],
+"gn": "Takes the dative: Der Hund gehorcht seinem Besitzer.",
+"x": [
+[
+"Der Hund gehorcht seinem Besitzer aufs Wort.",
+"The dog obeys its owner instantly.",
+"gehorcht"
+]
+]
+}
+],
+"rank": 12
+},
+{
+"l": "misslingen",
+"p": "verb",
+"c": "B1",
+"v": {
+"p3": "misslingt",
+"pret": "misslang",
+"pp": "misslungen",
+"aux": "sein"
+},
+"s": [
+{
+"en": [
+"to fail",
+"to go wrong"
+],
+"gn": "Strong, with sein. Impersonal with the dative: Etwas misslingt mir. Opposite of gelingen.",
+"x": [
+[
+"Der Kuchen ist mir leider misslungen.",
+"Unfortunately my cake went wrong.",
+"misslungen"
+]
+]
+}
+],
+"rank": 10
+},
+{
+"l": "misstrauen",
+"p": "verb",
+"c": "B1",
+"v": {
+"p3": "misstraut",
+"pret": "misstraute",
+"pp": "misstraut",
+"aux": "haben",
+"prep": "jemandem misstrauen (+ Dat.)"
+},
+"s": [
+{
+"en": [
+"to distrust",
+"to mistrust"
+],
+"gn": "Takes the dative; no ge- in the participle. Opposite of vertrauen.",
+"x": [
+[
+"Ich misstraue diesem Angebot, es klingt zu gut.",
+"I distrust this offer, it sounds too good.",
+"misstraue"
+]
+]
+}
+],
+"rank": 7
+},
+{
+"l": "verzeihen",
+"p": "verb",
+"c": "A2",
+"v": {
+"p3": "verzeiht",
+"pret": "verzieh",
+"pp": "verziehen",
+"aux": "haben"
+},
+"s": [
+{
+"en": [
+"to forgive"
+],
+"gn": "Strong: verzeiht – verzieh – hat verziehen. jemandem etwas verzeihen (+ Dat.).",
+"x": [
+[
+"Ich kann dir diesen Fehler nicht verzeihen.",
+"I can't forgive you for this mistake.",
+"verzeihen"
+]
+]
+}
+],
+"rank": 3
+}
+]
+}

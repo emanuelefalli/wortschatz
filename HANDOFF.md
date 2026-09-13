@@ -6,9 +6,10 @@ A mobile-first, offline-capable PWA that teaches German vocabulary with typed tr
 
 ## Current state
 - Live at **https://emanuelefalli.github.io/wortschatz/**, deployed automatically by GitHub Actions from every push to `main` of **github.com/emanuelefalli/wortschatz** (public repo). The workflow runs `npm test` and `npm run build` with `BASE_PATH=/wortschatz/`.
-- Local checkout: `/Users/testname/Downloads/german-flashcards`, branch `main`, clean, in sync with origin. Last commit: `e9b1f0d Random new-word selection, hide A1, safer level defaults`.
-- 70 Vitest tests pass; `npm run validate:vocab` reports 0 errors across 4 vocabulary files.
-- Vocabulary in the app: **3,137 words / 3,149 senses** (A2 493, B1 2,644). A1 (165 words) is hidden by `HIDDEN_LEVELS` in `src/data/loader.ts` and pruned from existing databases on startup; the words remain in the data files.
+- Local checkout: `/Users/testname/Downloads/german-flashcards`, branch `main`, clean, in sync with origin.
+- 83 Vitest tests pass; `npm run validate:vocab` reports 0 errors across 5 vocabulary files.
+- Vocabulary in the app: **3,150 words / 3,165 senses** (A2 497, B1 2,653). A1 (165 words) is hidden by `HIDDEN_LEVELS` in `src/data/loader.ts` and pruned from existing databases on startup; the words remain in the data files.
+- The learner can add words by hand: Words → **＋ Add word** (German headword, English translation, optional example sentence). Duplicates are blocked against the whole vocabulary; added words carry the source `user:manual`, sync with progress and can be deleted from their detail view.
 - Sync: code complete and tested with an in-memory provider. The owner created a Supabase project (`https://rorzifiaustuevcgeglz.supabase.co`, publishable key of the form `sb_publishable_…`). **The project is now built into the app** (`src/sync/defaults.ts`, overridable by the `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` repository variables forwarded by the deploy workflow; the URL variable is set, **the key variable still has to be set by the owner** because the key only exists in their browser). Until the key is set the deployed build shows the old "paste URL and key" form. **Not yet confirmed working end to end** — the owner still has to run the setup SQL once, create an account in the app (email + password), set a passphrase and press Sync now.
 - The owner is actively testing on their own browser and reporting issues in plain language; expect more of the same.
 
@@ -27,9 +28,11 @@ A mobile-first, offline-capable PWA that teaches German vocabulary with typed tr
 - **Vocabulary files** (`data/vocab/`, compact authoring format `compact-v1`, expanded by `src/data/compactFormat.ts`; every JSON file there is bundled automatically, ordered easy→hard by the file's dominant level):
   - `sample-a1a2.json` 170 words, `extended-a2b1.json` 129 words — original CC0 content written for the project.
   - `dtz-a2b1.json` 2,263 entries from the owner's Goethe/telc DTZ-Wortliste PDF (`dtz_wortliste.pdf`, git-ignored): headwords, grammar and German sentences from the PDF, English translations written for the project (`scripts/dtz-translations/`). All tagged B1 (list has no per-word levels). Stable shuffled `rank` so new words are not alphabetical.
+  - `listen-tabellen-a2b1.json` 13 entries from Witzlinger's *Deutsch – Aber Hallo! Listen & Tabellen A1–A2* (`listen-tabellen_a1-a2.pdf`, git-ignored): the PDF holds 166 verbs, 153 of which were already in the other files, so only the 13 missing ones were authored (`scripts/listen-entries/`) with verb forms, government patterns and original sentences.
   - `ocr-gcse-a2b1.json` 740 entries from the OCR GCSE list PDF (`68532-vocabulary-list-by-topic.pdf`, git-ignored): pairs extracted, then articles/plurals/verb forms/original sentences hand-written in `scripts/ocr-entries/`. Foundation→A2, Higher→B1.
-  - Duplicates are prevented by lemma (case-insensitive, ignoring "sich") in the pending scripts, `scripts/build-ocr.py`, and `tests/bundle.test.ts`.
-- **Levels**: the app's CEFR tags for DTZ/OCR are approximations chosen by us, not from the sources.
+  - Duplicates are prevented by lemma (case-insensitive, ignoring "sich") in the pending scripts, `scripts/build-ocr.py`, `scripts/build-listen.py`, the Add-word dialog (`findExistingWord`) and `tests/bundle.test.ts`.
+- **Levels**: the app's CEFR tags for DTZ/OCR/Aber-Hallo are approximations chosen by us, not from the sources.
+- **Manual word entry** (`src/data/userWord.ts`, `src/ui/components/AddWordDialog.tsx`): pure parse/validate helpers plus a modal on the Words screen. The article is taken from `der/die/das` typed in front of the headword, the part of speech is guessed from the spelling (capital = noun, `sich …` or `-en/-eln/-ern` = verb) and both can be overridden. The cloze target is auto-detected in the example sentence (exact match, then a shared stem, so `gehen → gehe` and `Katze → Katzen` work) and can be picked from chips when the detection fails, e.g. for strong verbs (`essen → isst`). The example sentence is **optional**; `applyAnswer` now inserts the cloze step only when the card has a sentence, so a bare word just gets the unaided retry. Words are stored with `source: "user:manual"`, which keeps them out of `pruneBundledWords` and marks them deletable (`deleteWord` also clears learning states, custom answers and list memberships; the review log is kept as history).
 
 ## Dead ends — do not retry
 - **Pronunciation/speaking exercise with Web Speech recognition**: built, then removed at the owner's request ("don't want the pronunciation game"). Keep only the audio playback buttons (speech synthesis) on cards. The `pronunciation` skill type stays unused.
@@ -40,8 +43,8 @@ A mobile-first, offline-capable PWA that teaches German vocabulary with typed tr
 - **Vocabeo dataset**: never scraped or copied; only the CEFR-level idea is shared. Do not revisit.
 
 ## Artifacts
-- Repo `github.com/emanuelefalli/wortschatz` (final, live). Key paths: `src/domain/` (pure logic: types, grader, scheduler, session, cloze, stats, text, time), `src/db/` (Dexie schema v3 + repository with transactional `recordReview`, backup export/import, lists, custom answers), `src/sync/` (crypto, merge, provider, supabaseProvider, engine, client), `src/ui/` (hash router; screens Dashboard, SessionSetup, Session, Browser, Stats, Placement, Settings; `components/SyncPanel.tsx`), `src/data/` (loader with `HIDDEN_LEVELS`, csv import, validate), `data/vocab/*.json`, `scripts/` (extract-dtz.py, dtz-pending.py, build-dtz.py, extract-ocr.py, ocr-pending.py, build-ocr.py, validate-vocab.ts), `tests/` (10 files), `.github/workflows/deploy.yml`, `README.md` (up to date incl. Supabase setup SQL and steps), `.claude/launch.json` (preview server for the in-app browser).
-- Git-ignored, local only: `dtz_wortliste.pdf`, `68532-vocabulary-list-by-topic.pdf`, `data/personal/dtz-pending.json`.
+- Repo `github.com/emanuelefalli/wortschatz` (final, live). Key paths: `src/domain/` (pure logic: types, grader, scheduler, session, cloze, stats, text, time), `src/db/` (Dexie schema v3 + repository with transactional `recordReview`, backup export/import, lists, custom answers), `src/sync/` (crypto, merge, provider, supabaseProvider, engine, client), `src/ui/` (hash router; screens Dashboard, SessionSetup, Session, Browser, Stats, Placement, Settings; `components/SyncPanel.tsx`), `src/data/` (loader with `HIDDEN_LEVELS`, csv import, validate, userWord), `data/vocab/*.json`, `scripts/` (extract-dtz.py, dtz-pending.py, build-dtz.py, extract-ocr.py, ocr-pending.py, build-ocr.py, extract-listen.py, build-listen.py, validate-vocab.ts), `tests/` (11 files), `.github/workflows/deploy.yml`, `README.md` (up to date incl. Supabase setup SQL and steps), `.claude/launch.json` (preview server for the in-app browser).
+- Git-ignored, local only: `dtz_wortliste.pdf`, `68532-vocabulary-list-by-topic.pdf`, `listen-tabellen_a1-a2.pdf`, `data/personal/dtz-pending.json`.
 - Memory notes for future Claude sessions exist (`german-flashcards-pwa`, `one-direction-per-word-sessions`, `no-pronunciation-exercise`, `no-node-on-machine`).
 - Earlier zip of the Phase 1 code: superseded by the repo.
 
@@ -60,7 +63,7 @@ A mobile-first, offline-capable PWA that teaches German vocabulary with typed tr
   create policy "own backup" on public.backups
     for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
   ```
-- Commands: `npm install`, `npm test`, `npm run typecheck`, `npm run build`, `npm run preview`, `npm run validate:vocab`; regenerate datasets with `python3 scripts/build-dtz.py data/personal/dtz-pending.json scripts/dtz-translations data/vocab/dtz-a2b1.json` and `python3 scripts/build-ocr.py data/vocab/ocr-gcse-a2b1.json` (extraction needs `pdfplumber` on `PYTHONPATH`).
+- Commands: `npm install`, `npm test`, `npm run typecheck`, `npm run build`, `npm run preview`, `npm run validate:vocab`; regenerate datasets with `python3 scripts/build-dtz.py data/personal/dtz-pending.json scripts/dtz-translations data/vocab/dtz-a2b1.json` and `python3 scripts/build-ocr.py data/vocab/ocr-gcse-a2b1.json` and `python3 scripts/build-listen.py data/vocab/listen-tabellen-a2b1.json` (extraction needs `pdfplumber` on `PYTHONPATH`).
 - Toolchain quirk: **this Mac has no Node/npm/brew**. Node 24 LTS was downloaded (checksum-verified) into the session scratchpad and used via `export PATH=<scratchpad>/node/node-v24.21.0-darwin-arm64/bin:$PATH`; a new session must repeat that (or the owner installs Node from nodejs.org). `gh` is at `~/bin/gh`, logged in as emanuelefalli. The in-app browser preview needs `.claude/launch.json` at the session root pointing at `node_modules/vite/bin/vite.js preview`.
 - Git commits end with `Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>`; author used so far: "Emanuele Falli".
 
@@ -70,7 +73,7 @@ A mobile-first, offline-capable PWA that teaches German vocabulary with typed tr
 - Never show the same word in both directions within one session.
 - A1 is gone; treat A2 as the lowest level.
 - Personal-use licensing is accepted by the owner for the DTZ and OCR lists; still keep the PDFs out of the repo.
-- Dedupe any new word list against the existing files before importing; the owner explicitly asked for "no duplicates".
+- Dedupe any new word list against the existing files before importing; the owner explicitly asked for "no duplicates". Report how many entries were dropped as duplicates.
 - Expect lists to be dropped into the project folder as PDFs with a filename mention; extract, dedupe, author grammar + sentences, tag levels, validate, commit, push.
 
 ## Open items

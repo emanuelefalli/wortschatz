@@ -25,6 +25,7 @@ npm run validate:vocab   # content checks for every file in data/vocab
 
 ```
 data/vocab/*.json             Vocabulary content (compact authoring format, CC0); every file is bundled
+src/data/userWord.ts          Parsing/validation for words the learner types in (Words → Add word)
 scripts/validate-vocab.ts     CLI content validation (same rules as the import UI)
 src/domain/                   Pure logic, no I/O
   types.ts                    Entities (Word, WordSense, Sentence, LearningState, …)
@@ -138,6 +139,44 @@ hand-written batches in `scripts/ocr-entries/` add articles, plurals, verb
 forms and original example sentences. Foundation-tier words are tagged A2,
 Higher-tier words B1. Regenerate with `python3 scripts/build-ocr.py
 data/vocab/ocr-gcse-a2b1.json`.
+
+## Adding a word by hand
+
+Words → **＋ Add word**. Type the German headword (with its article for nouns,
+e.g. `der Tisch`, or `sich freuen` for reflexive verbs), the English
+translation and, optionally, an example sentence with its translation. The
+part of speech and the article are guessed from the spelling and can be
+corrected; the word of the example sentence that carries the headword is
+detected for the fill-in-the-gap exercise and can be picked from the chips
+below the sentence.
+
+Separate alternative translations with `;` — each is accepted as correct.
+Before saving, the dialog checks the whole vocabulary: an exact match (same
+headword and part of speech) blocks the save and offers to open the existing
+word, and a same-spelling word with a different part of speech is shown as a
+hint without blocking. Added words carry the source `user:manual`, are stored
+with your progress, included in backups, synced to your other devices and
+never removed by a bundle refresh. Their detail view has a **Delete word**
+button (bundled words do not). A word saved without an example sentence
+simply skips the cloze step when you get it wrong; the unaided retry still
+happens.
+
+## Aber Hallo! verb list (personal use)
+
+`data/vocab/listen-tabellen-a2b1.json` holds the verbs from Hans Witzlinger's
+*Deutsch – Aber Hallo! Listen & Tabellen für die Grundstufe A1–A2*
+(`listen-tabellen_a1-a2.pdf`, git-ignored). `scripts/extract-listen.py` reads
+sections 2–4 (verbs with dative, dative + accusative and prepositional
+objects) and section 6 (strong and mixed verbs) and reports which of them are
+already in `data/vocab`; of the 166 verbs in the PDF, 153 were already there,
+so only 13 were authored by hand in `scripts/listen-entries/` with verb forms,
+government patterns, English translations and original example sentences.
+Levels are our own approximation. Regenerate with:
+
+```bash
+PYTHONPATH=<dir with pdfplumber> python3 scripts/extract-listen.py listen-tabellen_a1-a2.pdf raw.json
+python3 scripts/build-listen.py data/vocab/listen-tabellen-a2b1.json
+```
 
 ## Not yet implemented
 
