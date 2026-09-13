@@ -1,15 +1,14 @@
 import { useEffect, useState } from "react";
 import { getSyncStatus, syncNow } from "../../sync/engine";
-import { getProvider, loadPassphrase, loadSyncConfig, normalizeSupabaseUrl, savePassphrase, saveSyncConfig, type SyncConfig } from "../../sync/client";
+import { getProvider, isConfigured, loadPassphrase, loadSyncConfig, normalizeSupabaseUrl, resolveProject, savePassphrase, saveSyncConfig, type SyncConfig } from "../../sync/client";
+import { hasBuiltInProject } from "../../sync/defaults";
 import { SUPABASE_SETUP_SQL } from "../../sync/supabaseProvider";
 import { useAsync } from "../hooks";
 import { useStore } from "../store";
 
-const EMPTY: SyncConfig = { provider: "supabase", url: "", anonKey: "", autoSync: true, rememberPassphrase: true };
-
 export function SyncPanel() {
   const { db, toast, reloadWords } = useStore();
-  const [cfg, setCfg] = useState<SyncConfig>(() => loadSyncConfig() ?? EMPTY);
+  const [cfg, setCfg] = useState<SyncConfig>(() => loadSyncConfig());
   const [passphrase, setPassphrase] = useState(() => loadPassphrase());
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -17,7 +16,9 @@ export function SyncPanel() {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const { data: status, refresh } = useAsync(() => getSyncStatus(db), [db]);
-  const configured = cfg.url.trim() !== "" && cfg.anonKey.trim() !== "";
+  const configured = isConfigured(cfg);
+  const builtIn = hasBuiltInProject();
+  const usingOwnProject = cfg.url.trim() !== "" || cfg.anonKey.trim() !== "";
 
   useEffect(() => {
     if (!configured) {
@@ -36,7 +37,7 @@ export function SyncPanel() {
 
   const persist = (next: SyncConfig) => {
     setCfg(next);
-    saveSyncConfig(next.url || next.anonKey ? next : null);
+    saveSyncConfig(next);
   };
 
   const run = async (fn: () => Promise<string>) => {
@@ -73,27 +74,41 @@ export function SyncPanel() {
     <div className="card stack">
       <h3>Cloud sync (encrypted)</h3>
       <p className="small muted">
-        Your progress is encrypted on this device with a passphrase before it is uploaded; the server only stores ciphertext. Needs a free{" "}
-        <a href="https://supabase.com" target="_blank" rel="noreferrer">
-          Supabase
-        </a>{" "}
-        project: create one, run the SQL below once in its SQL editor, then paste the project URL and anon key here.
+        Your progress is encrypted on this device with a passphrase before it is uploaded; the server only stores ciphertext.
+        {builtIn
+          ? " On a new device just sign in with the same email and password and enter the same passphrase."
+          : " This build has no project of its own, so you need a free Supabase project: create one, run the SQL below once in its SQL editor, then paste the project URL and key here."}
       </p>
-      <details>
-        <summary className="small">SQL to run once in Supabase</summary>
-        <pre className="small" style={{ whiteSpace: "pre-wrap", overflowX: "auto" }}>{SUPABASE_SETUP_SQL}</pre>
+      <details open={!builtIn}>
+        <summary className="small">{builtIn ? (usingOwnProject ? "Using a different Supabase project" : "Use a different Supabase project") : "Supabase project"}</summary>
+        <div className="stack" style={{ marginTop: "0.5rem" }}>
+          {builtIn && (
+            <p className="small muted">
+              Leave these empty to use the project built into the app ({resolveProject({ ...cfg, url: "", anonKey: "" }).url}). Fill them in only to point this device at your own Supabase project.
+            </p>
+          )}
+          <details>
+            <summary className="small">SQL to run once in a new Supabase project</summary>
+            <pre className="small" style={{ whiteSpace: "pre-wrap", overflowX: "auto" }}>{SUPABASE_SETUP_SQL}</pre>
+          </details>
+          <div className="grid-2">
+            <div className="field">
+              <label htmlFor="sb-url">Project URL</label>
+              <input id="sb-url" type="text" placeholder="https://xxxx.supabase.co" value={cfg.url} onChange={(e) => persist({ ...cfg, url: e.target.value.trim() })} onBlur={(e) => persist({ ...cfg, url: normalizeSupabaseUrl(e.target.value) })} />
+              <span className="small muted">Project Settings → API → Project URL. A pasted REST or dashboard link is reduced to the project URL automatically.</span>
+            </div>
+            <div className="field">
+              <label htmlFor="sb-key">Publishable / anon key</label>
+              <input id="sb-key" type="text" placeholder="sb_publishable_… or eyJ…" value={cfg.anonKey} onChange={(e) => persist({ ...cfg, anonKey: e.target.value.trim() })} />
+            </div>
+          </div>
+          {builtIn && usingOwnProject && (
+            <button type="button" className="btn small ghost" onClick={() => persist({ ...cfg, url: "", anonKey: "" })}>
+              Back to the built-in project
+            </button>
+          )}
+        </div>
       </details>
-      <div className="grid-2">
-        <div className="field">
-          <label htmlFor="sb-url">Project URL</label>
-          <input id="sb-url" type="text" placeholder="https://xxxx.supabase.co" value={cfg.url} onChange={(e) => persist({ ...cfg, url: e.target.value.trim() })} onBlur={(e) => persist({ ...cfg, url: normalizeSupabaseUrl(e.target.value) })} />
-          <span className="small muted">Project Settings → API → Project URL. A pasted REST or dashboard link is reduced to the project URL automatically.</span>
-        </div>
-        <div className="field">
-          <label htmlFor="sb-key">Publishable / anon key</label>
-          <input id="sb-key" type="text" placeholder="eyJ…" value={cfg.anonKey} onChange={(e) => persist({ ...cfg, anonKey: e.target.value.trim() })} />
-        </div>
-      </div>
 
       {configured && !signedInAs && (
         <div className="stack">

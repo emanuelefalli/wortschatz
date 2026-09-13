@@ -87,10 +87,20 @@ synthesis.
 
 ## Cloud sync setup (Supabase)
 
+The app ships with a Supabase project built in (`src/sync/defaults.ts`), so on
+a new device you only sign in with your email and password under Settings →
+Cloud sync and enter your backup passphrase. The publishable key is safe to
+publish: the `backups` table is protected by row-level security, so the key
+alone cannot read anyone's data, and the payload is encrypted on the device
+anyway.
+
+To point the app at your own project:
+
 1. Create a free project at supabase.com.
 2. In the SQL editor run the statement shown in Settings → Cloud sync (creates `public.backups` with row-level security so each user only sees their own row).
 3. In Authentication → Providers keep Email enabled. If "Confirm email" is on, confirm the sign-up email once.
-4. In the app paste the project URL and anon key, create an account, choose a passphrase, and press Sync now. Do the same on every device with the same account and passphrase.
+4. Either bake it into the build (set the `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` repository variables used by the deploy workflow, or edit `src/sync/defaults.ts`), or on one device open Settings → Cloud sync → "Use a different Supabase project" and paste the URL and key there.
+5. Create an account, choose a passphrase, and press Sync now. Do the same on every device with the same account and passphrase.
 
 ## Hosting (GitHub Pages)
 

@@ -9,7 +9,7 @@ A mobile-first, offline-capable PWA that teaches German vocabulary with typed tr
 - Local checkout: `/Users/testname/Downloads/german-flashcards`, branch `main`, clean, in sync with origin. Last commit: `e9b1f0d Random new-word selection, hide A1, safer level defaults`.
 - 70 Vitest tests pass; `npm run validate:vocab` reports 0 errors across 4 vocabulary files.
 - Vocabulary in the app: **3,137 words / 3,149 senses** (A2 493, B1 2,644). A1 (165 words) is hidden by `HIDDEN_LEVELS` in `src/data/loader.ts` and pruned from existing databases on startup; the words remain in the data files.
-- Sync: code complete and tested with an in-memory provider. The owner created a Supabase project (`https://rorzifiaustuevcgeglz.supabase.co`, publishable key of the form `sb_publishable_…`) but had pasted the REST URL; that is now auto-normalised. **Not yet confirmed working end to end** — the owner still has to run the setup SQL once, create an account in the app (email + password), set a passphrase and press Sync now.
+- Sync: code complete and tested with an in-memory provider. The owner created a Supabase project (`https://rorzifiaustuevcgeglz.supabase.co`, publishable key of the form `sb_publishable_…`). **The project is now built into the app** (`src/sync/defaults.ts`, overridable by the `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` repository variables forwarded by the deploy workflow; the URL variable is set, **the key variable still has to be set by the owner** because the key only exists in their browser). Until the key is set the deployed build shows the old "paste URL and key" form. **Not yet confirmed working end to end** — the owner still has to run the setup SQL once, create an account in the app (email + password), set a passphrase and press Sync now.
 - The owner is actively testing on their own browser and reporting issues in plain language; expect more of the same.
 
 ## Decisions (and why)
@@ -47,7 +47,7 @@ A mobile-first, offline-capable PWA that teaches German vocabulary with typed tr
 
 ## Verbatim essentials
 - Live URL: `https://emanuelefalli.github.io/wortschatz/` · repo `emanuelefalli/wortschatz` · Pages source = GitHub Actions.
-- Supabase project URL: `https://rorzifiaustuevcgeglz.supabase.co` (key is in the owner's browser Settings, not in the repo).
+- Supabase project URL: `https://rorzifiaustuevcgeglz.supabase.co` (baked into `src/sync/defaults.ts`; the publishable key is in the owner's browser Settings and should go into the `VITE_SUPABASE_ANON_KEY` repository variable or the same file).
 - Setup SQL (also in Settings → Cloud sync and README):
   ```sql
   create table if not exists public.backups (
@@ -74,7 +74,7 @@ A mobile-first, offline-capable PWA that teaches German vocabulary with typed tr
 - Expect lists to be dropped into the project folder as PDFs with a filename mention; extract, dedupe, author grammar + sentences, tag levels, validate, commit, push.
 
 ## Open items
-- Next step: confirm sync end to end once the owner has run the SQL, created the in-app account and pressed Sync now; fix whatever error message comes back (only the in-memory provider has been exercised so far).
+- Next step: get the publishable key from the owner and either run `gh variable set VITE_SUPABASE_ANON_KEY -R emanuelefalli/wortschatz --body "<key>"` (then re-run the deploy workflow) or paste it into `src/sync/defaults.ts`. Then confirm sync end to end once the owner has run the SQL, created the in-app account and pressed Sync now; fix whatever error message comes back (only the in-memory provider has been exercised so far).
 - Then: watch for the owner's next usability reports (the "same words again" feedback also came from learning-step reviews returning after 1–10 minutes, which is intended; if it keeps bothering them, consider a setting for longer learning steps).
 - Possible follow-ups never requested: article/plural exercise modes, spelling skill, licensed audio, social features (spec's later modes). Do not build unasked.
 - Unresolved: none.

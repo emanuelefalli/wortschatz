@@ -4,35 +4,53 @@
 
 import type { FlashcardDB } from "../db/schema";
 import { syncNow, type SyncResult } from "./engine";
+import { DEFAULT_SUPABASE_ANON_KEY, DEFAULT_SUPABASE_URL } from "./defaults";
 import { getSupabaseClient, SupabaseProvider } from "./supabaseProvider";
 
 export type SyncConfig = {
   provider: "supabase";
+  /** Project URL typed on this device; empty = use the project built into the app. */
   url: string;
+  /** Publishable key typed on this device; empty = use the key built into the app. */
   anonKey: string;
   autoSync: boolean;
   rememberPassphrase: boolean;
 };
 
+export const DEFAULT_SYNC_CONFIG: SyncConfig = { provider: "supabase", url: "", anonKey: "", autoSync: true, rememberPassphrase: true };
+
 const CONFIG_KEY = "wortschatz.sync.config";
 const PASS_KEY = "wortschatz.sync.passphrase";
 
-export function loadSyncConfig(): SyncConfig | null {
+/** Stored per-device config, or the defaults when nothing was saved yet. */
+export function loadSyncConfig(): SyncConfig {
   try {
     const raw = localStorage.getItem(CONFIG_KEY);
-    return raw ? (JSON.parse(raw) as SyncConfig) : null;
+    return raw ? { ...DEFAULT_SYNC_CONFIG, ...(JSON.parse(raw) as Partial<SyncConfig>) } : { ...DEFAULT_SYNC_CONFIG };
   } catch {
-    return null;
+    return { ...DEFAULT_SYNC_CONFIG };
   }
 }
 
-export function saveSyncConfig(cfg: SyncConfig | null): void {
+export function saveSyncConfig(cfg: SyncConfig): void {
   try {
-    if (cfg) localStorage.setItem(CONFIG_KEY, JSON.stringify(cfg));
-    else localStorage.removeItem(CONFIG_KEY);
+    localStorage.setItem(CONFIG_KEY, JSON.stringify(cfg));
   } catch {
     /* storage unavailable */
   }
+}
+
+/** The project this device actually talks to: what was typed here, else what the build carries. */
+export function resolveProject(cfg: SyncConfig, defaults: { url: string; anonKey: string } = { url: DEFAULT_SUPABASE_URL, anonKey: DEFAULT_SUPABASE_ANON_KEY }): { url: string; anonKey: string } {
+  const url = normalizeSupabaseUrl(cfg.url) || defaults.url;
+  const anonKey = cfg.anonKey.trim() || defaults.anonKey;
+  return { url, anonKey };
+}
+
+/** Whether a sync provider can be built at all (a project URL and key are known). */
+export function isConfigured(cfg: SyncConfig): boolean {
+  const p = resolveProject(cfg);
+  return p.url !== "" && p.anonKey !== "";
 }
 
 export function loadPassphrase(): string {
@@ -70,7 +88,9 @@ export function normalizeSupabaseUrl(raw: string): string {
 }
 
 export function getProvider(cfg: SyncConfig): SupabaseProvider {
-  return new SupabaseProvider(getSupabaseClient({ url: normalizeSupabaseUrl(cfg.url), anonKey: cfg.anonKey.trim() }));
+  const project = resolveProject(cfg);
+  if (!project.url || !project.anonKey) throw new Error("Cloud sync is not set up: no Supabase project URL or key.");
+  return new SupabaseProvider(getSupabaseClient(project));
 }
 
 let inFlight: Promise<SyncResult | null> | null = null;
@@ -82,7 +102,7 @@ export function autoSync(db: FlashcardDB, onError?: (message: string) => void): 
     try {
       const cfg = loadSyncConfig();
       const pass = loadPassphrase();
-      if (!cfg || !cfg.autoSync || !pass || typeof navigator !== "undefined" && !navigator.onLine) return null;
+      if (!cfg.autoSync || !pass || !isConfigured(cfg) || (typeof navigator !== "undefined" && !navigator.onLine)) return null;
       const provider = getProvider(cfg);
       if (!(await provider.isSignedIn())) return null;
       return await syncNow(db, provider, pass);
